@@ -52,6 +52,16 @@ if (typeof a === "number" && typeof b === "number") {
 - Contrary to `any`, TypeScript will never infer `unknown`,
 - We need to annotate it.
 
+### Objects
+
+- TypeScript does `stuctural / duck typing` (as opposed to `nominal typing`) => we don't care about the name of the type but we care about its shape (its properties).
+- There are many ways to type an object:
+  - `object` (mind the capitalization): an object, with no specific shape, not `null`. **To be used when we don't really care about the shape** of the object and we don't plan on mutating / accessing its properties.
+  - `{ property: type }` (object literal (!== type literal)): an object with this exact shape (can be an object OR a class as long as it matches the shape), **to be used in most cases where we can anticipate the shape**,
+    - `{}`: !!! ideally **should never be used** or last resort since it means the shape is empty (better off using `object`),
+    - if what we mean is an object with key names that cannot be anticipated: `{ [key: string]: ValueType }`,
+  - `Object`: roughly the same as `{}` (subtle different about methods that can be assigned to it or not). !!! **should never be used**.
+
 ### Type literals
 
 - Type literal = a type that represents a single **value**,
@@ -118,3 +128,48 @@ const myArray = ["toto"]; // inferred as string[], you could mutate the array in
 myObject.tata = "tata"; // throw an error because `tata` is not part of the initial type
 myArray.push("tata"); // no error because it's an array of string, not a tuple (will come back to this later);
 ```
+
+### Array
+
+
+### Union & Intersection
+
+- `|` for union,
+- `&` for intersection.
+
+```TS
+type Cat = {
+  name: string;
+  purrs: boolean;
+};
+
+type Dog = { name: string; barks: boolean; wags: boolean };
+
+type CatOrDogOrBoth = Cat | Dog | { toto: "toto" }; // note that union doesn't necessarily mean one OR the other, it can be both at the same time
+
+type CatAndDog = Cat & Dog; // common ground between Cat and Dog
+
+let aCatOrDogOrBoth: CatOrDogOrBoth = { name: "bonkers", purrs: true };
+aCatOrDogOrBoth = { name: "Domino", barks: true, wags: true }; // no error
+
+aCatOrDogOrBoth = {
+  name: "Dokners",
+  barks: true,
+  wags: true,
+  purrs: true,
+  toto: "toto",
+}; // no error, it matches several shapes from the union (all of them combined actually)
+
+aCatOrDogOrBoth = {
+  toto: "toto",
+}; // no error, it's one of the shapes provided in the union
+
+let aCatAndDog: CatAndDog = {
+  name: "same",
+  barks: true,
+  wags: true,
+  purrs: true, // if you comment out one of these properties, you get an error
+}; // what's the difference with the previous example? Here it needs to be both, we need to set properties of both cat and dog
+// in the previous example, we only need to set all properties of a cat OR a dog (but we can set properties of both)
+```
+###

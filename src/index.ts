@@ -31,3 +31,47 @@ const myArray = ["toto"];
 
 myObject.tata = "tata"; // throw an error because `tata` is not part of the initial type
 myArray.push("tata"); // no error because it's an array of string, not a tuple (will come back to this later);
+
+let myObj: object = {
+  a: "toto",
+};
+
+myObj.a = "toto";
+
+type Cat = {
+  name: string;
+  purrs: boolean;
+};
+
+type Dog = { name: string; barks: boolean; wags: boolean };
+
+type CatOrDogOrBoth = Cat | Dog | { toto: "toto" }; // note that union doesn't necessarily mean one OR the other, it can be both at the same time
+
+type CatAndDog = Cat & Dog; // common ground between Cat and Dog
+
+let aCatOrDogOrBoth: CatOrDogOrBoth = { name: "bonkers", purrs: true };
+aCatOrDogOrBoth = { name: "Domino", barks: true, wags: true }; // no error
+
+aCatOrDogOrBoth = {
+  name: "Dokners",
+  barks: true,
+  wags: true,
+  purrs: true,
+  toto: "toto",
+}; // no error, it matches several shapes from the union (all of them combined actually)
+
+aCatOrDogOrBoth = {
+  toto: "toto",
+}; // no error, it's one of the shapes provided in the union
+
+let aCatAndDog: CatAndDog = {
+  name: "same",
+  barks: true,
+  wags: true,
+  purrs: true, // if you comment out one of these properties, you get an error
+}; // what's the difference with the previous example? Here it needs to be both, we need to set properties of both cat and dog
+// in the previous example, we only need to set all properties of a cat OR a dog (but we can set properties of both)
+
+type Toto = "toto" | "tata" | "tutu";
+
+const obj: { [key: string]: any } = {};
