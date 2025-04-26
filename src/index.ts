@@ -43,6 +43,10 @@ type Cat = {
   purrs: boolean;
 };
 
+type Doggo = "willow" | "sana";
+
+type TestDoggo = "willowsana" extends Doggo ? true : false;
+
 type Dog = { name: string; barks: boolean; wags: boolean };
 
 type CatOrDogOrBoth = Cat | Dog | { toto: "toto" }; // note that union doesn't necessarily mean one OR the other, it can be both at the same time
@@ -75,3 +79,73 @@ let aCatAndDog: CatAndDog = {
 type Toto = "toto" | "tata" | "tutu";
 
 const obj: { [key: string]: any } = {};
+
+const myArrayy = ["red"];
+myArrayy.push(true); // error because `myArray` is inferred as string[] (with `const` or `let`)
+
+const myArrayyy: (string | boolean)[] = ["red"];
+myArrayyy.push(true); // no error
+
+const myImmutableArray: readonly string[] = ["toto", "tutu"];
+
+myImmutableArray.push("tata"); // error
+myImmutableArray[1] = "tata"; // error
+
+const myTest = myArray[1] ? "yeah" : "nope"; // no error, TS knows that myArrayyy[1] is a boolean
+
+let aT: [number] = [1];
+let bT: [string, string, number] = ["malcolm", "gladwell", 1963];
+bT = ["queen", "elizabeth", 1926]; // no error
+bT = ["queen", "elizabeth", 1926, "toto"]; // error
+bT = ["queen", "elizabeth", "toto"]; // error
+
+function tooto() {
+  let aa = []; // at this point typed as `any`
+  aa.push(1); // now typed to number[]
+  aa.push("x"); // now typed to (string|number)[]
+  return aa; // (string|number)[]
+}
+
+class Pizza {
+  addVegetable = () => "blabla";
+}
+
+addDeliciousVegetable(new Pizza());
+addDeliciousVegetable(null); // error with strict null check
+addDeliciousVegetable(null); // no error without strict null check
+
+function addDeliciousVegetable(pizza: Pizza): string {
+  return pizza.addVegetable();
+}
+
+enum Language {
+  English, // inferred automatically as English = 0
+  Spanish, // inferred automatically as Spanish = 1
+}
+
+enum Language {
+  Russian = 2,
+}
+
+let myFirstLanguage = Language.Russian;
+
+enum Color {
+  Red = "#c100000",
+  Blue = "#007ac1",
+  Pink = 0xc100050, // Hexadecimal literal
+  White = 255, // decimal literal
+}
+
+const myColor = Color.Green; // error
+const myColor2 = Color[10]; // no error
+
+const enum Color2 {
+  Red = "#c100000",
+  Blue = "#007ac1",
+  Pink = 0xc100050, // Hexadecimal literal
+  White = 255, // decimal literal
+}
+
+const myColor = Color2.Green; // error
+const myColor2 = Color2[10]; // error
+const myColor3 = Color2[0]; // error too, cannot access through index
