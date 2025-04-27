@@ -146,6 +146,17 @@ const enum Color2 {
   White = 255, // decimal literal
 }
 
+console.log(Color2.Red);
+
 const myColor = Color2.Green; // error
 const myColor2 = Color2[10]; // error
 const myColor3 = Color2[0]; // error too, cannot access through index
+
+function fancyDate(this: Date) {
+  return `${this.getDate()}/${this.getMonth()}/${this.getFullYear()}`;
+}
+
+fancyDate(); // error at runtime
+fancyDate.apply(new Date()); // to bind this and call the function at the same time (same but if we had arguments, we'd provide them as second param in an array)
+const boundFancyDate = fancyDate.bind(new Date());
+boundFancyDate(); // no error

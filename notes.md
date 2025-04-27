@@ -469,3 +469,177 @@ In summary, while `const enum` can offer minor bundle size reductions by inlinin
 Do not use them unless you really need to but you probably don't need them anyway.
 
 Note: if you use `erasableSyntaxOnly`, enums are disabled because they generate non standard JS code anyway
+
+### Functions
+
+#### Reminders
+
+- Multiple syntaxes (just like in JS):
+  - `function greet(name: string): string { ... }` = named function syntax,
+  - `let greet = function(name: string): string { ... }` = function expression,
+  - `let greet = (name: string) => { ... }` = arrow function expression,
+  - `let greet = (name: string) => ...` = shorthand arrow function expression,
+  - `let greet = new Function('name', 'return "hello" + name')` = should never be used. It's an object that callable + methods from the `Function` prototype. But it says nothing about the params and return types. This makes it unsafe since params & return type are specifically what we want to type within functions.
+- Parameter = piece of data that a function needs to run. Declared as part of the a function declaration = AKA formal parameter,
+- Argument = piece of data passed to a function when invoking it = AKA actual parameter.
+- Return type is inferred automatically by TypeScript so the annotation is optional.
+- When invoking a function, you don't annotate the arguments, TS will check if their type matches the ones required by the function params:
+
+```TS
+add(1, 3) // no need to annotate + no error since add declared 2 params with type number
+greet('Willow') // no need to annoated + no error since greet declared 1 param with type string
+add(1) // error because 1 argument is missing
+greet(1, 'a') // error because first param is of type number instead of string
+```
+
+#### Optional & default params
+
+- `?` to mark param as optional,
+- Required params must come first,
+- Providing a default value for a param is essentially the same as making it optional but there's a difference:
+  - params with default values may come before required params
+- If you provide a default value, you don't have to annotate with `?`, optional is implied by the default value presence.
+
+```TS
+// optional with no default value
+function log(message: string, userId?: string) {
+  ...
+}
+// cannot come first
+function log(userId?: string, message: string) { // !!! error
+  ...
+}
+// with a default value
+function log(message: string, userId = 'Not signed in') {
+  ...
+}
+// optional with default value may come first
+function log(userId = 'Not signed in', message: string) { // no error
+  ...
+}
+```
+
+#### Rest parameters
+
+- If list of params, then you can type as `array`
+
+```TS
+function sum(numbers: number[]): number { ... }
+```
+
+- Variadic function API = takes a variable number of arguments
+
+```TS
+function sumVariadic(): number {
+  return Array.from(arguments).reduce((total, n) => total + n, 0);
+}
+```
+
+!!! `arguments` is totally unsafe. In the example above, `n` is typed as `any`.
+
+TS will throw an error when calling `sumVariadic`:
+
+```TS
+sumVariadic(1, 2, 3); // error: Expected 0 arguments, but got 3
+```
+
+Since the function signature lists no arguments, TS expects us to provide no arguments.
+
+How do we type variadic functions then? => Rest parameters
+
+```TS
+function sumVariadicSafe(...numbers: number[]): number {
+  return numbers.reduce((total, n) => total + n, 0);
+}
+
+sumVariadic(1, 2, 3); // no error
+```
+
+Rules about Rest params:
+
+- at most 1 rest parameter by function,
+- must be the last param.
+
+Example of how `console.log` is typed:
+
+```TS
+interface Console {
+  log(message?: any, ...optionalParams: any[]): void;
+}
+```
+
+#### Typing `this` (function context)
+
+- if function uses `this`, declare & annotate it as a param:
+
+```TS
+function fancyDate(this: Date) {
+  return `${this.getDate()}/${this.getMonth()}/${this.getFullYear()}`;
+}
+
+fancyDate() // error at compile time & at runtime because this is not bound
+fancyDate.call(new Date); // to bind this and call the function at the same time
+fancyDate.apply(new Date); // to bind this and call the function at the same time (same but if we had arguments, we'd provide them as second param in an array)
+const boundFancyDate = fancyDate.bind(new Date);
+boundFancyDate(); // no error
+```
+
+These errors are related to `noImplicitThis` that is set to `true` when using `strict: true` in tsconfig.
+
+#### Generator functions
+
+- generate values,
+- Lazy (compute value when a consumer asks for it),
+- Specifically useful for infinite lists.
+
+```TS
+function* createFibonacciGenerator() {
+  let a = 0;
+  let b = 1;
+  while (true) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
+}
+
+let fibonacciGenerator = createFibonacciGenerator(); // IterableIterator<number>
+fibonacciGenerator.next(); // { value: 0, done: false }
+fibonacciGenerator.next(); // { value: 1, done: false }
+fibonacciGenerator.next(); // { value: 1, done: false }
+fibonacciGenerator.next(); // { value: 2, done: false }
+fibonacciGenerator.next(); // { value: 3, done: false }
+fibonacciGenerator.next(); // { value: 5, done: false }
+```
+
+- `yield` = the result given to each `next()` call
+- TS automatically infers `IterableIterator<number>` for the generator function but you may annotate it yourself
+
+```TS
+function* createNumber(): IterableIterator<number> {
+  let n = 0;
+  while(true) {
+    yield n++;
+  }
+}
+```
+
+Terminology:
+- `iterable` = any object that contains a property called `Symbol.iterator`, whose value is a function that returns an iterator.
+- `iterator` = any object that defined a method called next, which returns an object with the properties `value` and `done`.
+
+When creating a generator (for instance calling `createFibonacciGenerator`):
+- get a value that's both `iterable` and `iterator` because it defines a `Symbole.iterator` property & a `next` method.
+
+Manual creation:
+
+```TS
+let number = {
+  *[Symbol.iterator]() {
+    for (let n = 1; n <= 10; n++) {
+      yield n;
+    }
+  }
+}
+```
+
+Note: Didn't understand iterable vs iterator, will need to go back to this later on but not really a TS subject anyway.
